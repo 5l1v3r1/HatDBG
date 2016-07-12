@@ -57,71 +57,71 @@ public struct SECURITY_ATTRIBUTES
 [Flags]
 public enum CreationFlags : int
 {
-    NONE 								= 0,
-    DEBUG_PROCESS 						= 0x00000001,
+    NONE					= 0,
+    DEBUG_PROCESS 				= 0x00000001,
     DEBUG_ONLY_THIS_PROCESS 			= 0x00000002,
-    CREATE_SUSPENDED 					= 0x00000004,
-    DETACHED_PROCESS 					= 0x00000008,
-    CREATE_NEW_CONSOLE 					= 0x00000010,
+    CREATE_SUSPENDED 				= 0x00000004,
+    DETACHED_PROCESS 				= 0x00000008,
+    CREATE_NEW_CONSOLE 				= 0x00000010,
     CREATE_NEW_PROCESS_GROUP 			= 0x00000200,
     CREATE_UNICODE_ENVIRONMENT 			= 0x00000400,
     CREATE_SEPARATE_WOW_VDM 			= 0x00000800,
-    CREATE_SHARED_WOW_VDM 				= 0x00001000,
+    CREATE_SHARED_WOW_VDM 			= 0x00001000,
     CREATE_PROTECTED_PROCESS 			= 0x00040000,
     EXTENDED_STARTUPINFO_PRESENT 		= 0x00080000,
     CREATE_BREAKAWAY_FROM_JOB 			= 0x01000000,
-    CREATE_PRESERVE_CODE_AUTHZ_LEVEL 	= 0x02000000,
+    CREATE_PRESERVE_CODE_AUTHZ_LEVEL 		= 0x02000000,
     CREATE_DEFAULT_ERROR_MODE 			= 0x04000000,
-    CREATE_NO_WINDOW 					= 0x08000000,
+    CREATE_NO_WINDOW 				= 0x08000000,
 }
 
 [Flags]
 public enum STARTF : uint
 {
     STARTF_USESHOWWINDOW 		= 0x00000001,
-    STARTF_USESIZE 				= 0x00000002,
+    STARTF_USESIZE 			= 0x00000002,
     STARTF_USEPOSITION 			= 0x00000004,
     STARTF_USECOUNTCHARS 		= 0x00000008,
-    STARTF_USEFILLATTRIBUTE 	= 0x00000010,
+    STARTF_USEFILLATTRIBUTE 		= 0x00000010,
     STARTF_RUNFULLSCREEN 		= 0x00000020, 
     STARTF_FORCEONFEEDBACK 		= 0x00000040,
-    STARTF_FORCEOFFFEEDBACK 	= 0x00000080,
+    STARTF_FORCEOFFFEEDBACK 		= 0x00000080,
     STARTF_USESTDHANDLES 		= 0x00000100,
 }
 
 public enum ShowWindow : short
 {
-    SW_HIDE 			= 0,
-    SW_SHOWNORMAL 		= 1,
-    SW_NORMAL 			= 1,
+    SW_HIDE 		= 0,
+    SW_SHOWNORMAL 	= 1,
+    SW_NORMAL 		= 1,
     SW_SHOWMINIMIZED 	= 2,
     SW_SHOWMAXIMIZED 	= 3,
-    SW_MAXIMIZE 		= 3,
+    SW_MAXIMIZE 	= 3,
     SW_SHOWNOACTIVATE 	= 4,
-    SW_SHOW 			= 5,
-    SW_MINIMIZE 		= 6,
+    SW_SHOW 		= 5,
+    SW_MINIMIZE 	= 6,
     SW_SHOWMINNOACTIVE 	= 7,
-    SW_SHOWNA 			= 8,
-    SW_RESTORE 			= 9,
-    SW_SHOWDEFAULT 		= 10,
+    SW_SHOWNA 		= 8,
+    SW_RESTORE 		= 9,
+    SW_SHOWDEFAULT 	= 10,
     SW_FORCEMINIMIZE 	= 11,
-    SW_MAX 				= 11
+    SW_MAX 		= 11
 }
 
 [Flags]
 public enum ProcessAccess : uint
 {
-	Terminate 			= 0x00000001,
+	Terminate 		= 0x00000001,
 	CreateThread 		= 0x00000002,
 	VMOperation 		= 0x00000008,
-	VMRead 				= 0x00000010,
-	VMWrite 			= 0x00000020,
-	DupHandle 			= 0x00000040,
+	VMRead 			= 0x00000010,
+	VMWrite 		= 0x00000020,
+	DupHandle 		= 0x00000040,
 	SetInformation 		= 0x00000200,
 	QueryInformation 	= 0x00000400,
 	SuspendResume 		= 0x00000800,
 	Synchronize 		= 0x00100000,
-	All 				= 0x001F0FFF
+	All 			= 0x001F0FFF
 }
 
 [Flags]
@@ -132,11 +132,11 @@ public enum ThreadAccess : int
 	GET_CONTEXT         	= (0x0008),
 	SET_CONTEXT         	= (0x0010),
 	SET_INFORMATION     	= (0x0020),
-	QUERY_INFORMATION		= (0x0040),
+	QUERY_INFORMATION	= (0x0040),
 	SET_THREAD_TOKEN    	= (0x0080),
 	IMPERSONATE         	= (0x0100),
 	DIRECT_IMPERSONATION    = (0x0200),
-	THREAD_ALL_ACCESS		= 0x001F03FF,
+	THREAD_ALL_ACCESS	= 0x001F03FF,
 }
   
 [Flags]
@@ -155,16 +155,9 @@ public enum SnapshotFlags : uint
 [Flags]
 public enum CONTEXT_FLAGS : uint
 {
-   CONTEXT_i386 = 0x10000,
-   CONTEXT_i486 = 0x10000,   //  same as i386
-   CONTEXT_CONTROL = CONTEXT_i386 | 0x01, // SS:SP, CS:IP, FLAGS, BP
-   CONTEXT_INTEGER = CONTEXT_i386 | 0x02, // AX, BX, CX, DX, SI, DI
-   CONTEXT_SEGMENTS = CONTEXT_i386 | 0x04, // DS, ES, FS, GS
-   CONTEXT_FLOATING_POINT = CONTEXT_i386 | 0x08, // 387 state
-   CONTEXT_DEBUG_REGISTERS = CONTEXT_i386 | 0x10, // DB 0-3,6,7
-   CONTEXT_EXTENDED_REGISTERS = CONTEXT_i386 | 0x20, // cpu specific extensions
-   CONTEXT_FULL = CONTEXT_CONTROL | CONTEXT_INTEGER | CONTEXT_SEGMENTS,
-   CONTEXT_ALL = CONTEXT_CONTROL | CONTEXT_INTEGER | CONTEXT_SEGMENTS |  CONTEXT_FLOATING_POINT | CONTEXT_DEBUG_REGISTERS |  CONTEXT_EXTENDED_REGISTERS
+   CONTEXT_DEBUG_REGISTERS 	= 0x00010010,
+   CONTEXT_FULL 		= 0x00010007,
+   CONTEXT_ALL 			= CONTEXT_FULL | CONTEXT_DEBUG_REGISTERS
 }
 	
 [StructLayout(LayoutKind.Sequential)]
@@ -232,38 +225,32 @@ public struct FLOATING_SAVE_AREA
 [StructLayout(LayoutKind.Sequential)]
 public struct CONTEXT
 {
-     public uint ContextFlags; //set this to an appropriate value
-     // Retrieved by CONTEXT_DEBUG_REGISTERS
-     public uint Dr0;  
-     public uint Dr1;
-     public uint Dr2;
-     public uint Dr3;
-     public uint Dr6;
-     public uint Dr7;
-     // Retrieved by CONTEXT_FLOATING_POINT
-     public FLOATING_SAVE_AREA FloatSave;
-     // Retrieved by CONTEXT_SEGMENTS
-     public uint SegGs;
-     public uint SegFs;
-     public uint SegEs;
-     public uint SegDs;
-     // Retrieved by CONTEXT_INTEGER
-     public uint Edi;
-     public uint Esi;
-     public uint Ebx;
-     public uint Edx;
-     public uint Ecx;
-     public uint Eax;
-     // Retrieved by CONTEXT_CONTROL
-     public uint Ebp;
-     public uint Eip;
-     public uint SegCs;
-     public uint EFlags;
-     public uint Esp;
-     public uint SegSs;
-     // Retrieved by CONTEXT_EXTENDED_REGISTERS
-     [MarshalAs(UnmanagedType.ByValArray, SizeConst = 512)]
-     public byte[] ExtendedRegisters;
+	public uint ContextFlags;
+	public uint Dr0;
+	public uint Dr1;
+	public uint Dr2;
+	public uint Dr3;
+	public uint Dr6;
+	public uint Dr7;
+	public FLOATING_SAVE_AREA FloatSave;
+	public uint SegGs;
+	public uint SegFs;
+	public uint SegEs;
+	public uint SegDs;
+	public uint Edi;
+	public uint Esi;
+	public uint Ebx;
+	public uint Edx;
+	public uint Ecx;
+	public uint Eax;
+	public uint Ebp;
+	public uint Eip;
+	public uint SegCs;
+	public uint EFlags;
+	public uint Esp;
+	public uint SegSs;
+	[MarshalAs(UnmanagedType.ByValArray, SizeConst=0x200, ArraySubType=UnmanagedType.I1)]
+	public byte[] ExtendedRegisters;
 } 
 	
 public class DEBUGGER
@@ -274,49 +261,50 @@ public class DEBUGGER
 }
 public static class Kernel32
 {
-    [DllImport("kernel32.dll", SetLastError=true)]
-    public static extern bool CreateProcessA(
-        string lpApplicationName, 
-        string lpCommandLine, 
-        ref SECURITY_ATTRIBUTES lpProcessAttributes, 
-        ref SECURITY_ATTRIBUTES lpThreadAttributes,
-        bool bInheritHandles, 
-        CreationFlags dwCreationFlags, 
-        IntPtr lpEnvironment,
-        string lpCurrentDirectory, 
-        ref STARTUPINFO lpStartupInfo, 
-        out PROCESS_INFORMATION lpProcessInformation);
+    	[DllImport("kernel32.dll", SetLastError=true)]
+    	public static extern bool CreateProcessA(
+	        string lpApplicationName, 
+	        string lpCommandLine, 
+	        ref SECURITY_ATTRIBUTES lpProcessAttributes, 
+	        ref SECURITY_ATTRIBUTES lpThreadAttributes,
+	        bool bInheritHandles, 
+	        CreationFlags dwCreationFlags, 
+	        IntPtr lpEnvironment,
+	        string lpCurrentDirectory, 
+	        ref STARTUPINFO lpStartupInfo, 
+	        out PROCESS_INFORMATION lpProcessInformation
+        );
 		
 	[DllImport("kernel32.dll")]
-    public static extern uint GetLastError();
+    	public static extern uint GetLastError();
 
 	[DllImport("kernel32.dll")]
-    public static extern IntPtr OpenProcess(
+    	public static extern IntPtr OpenProcess(
 		ProcessAccess dwDesiredAccess,
 		bool bInheritHandle,
 		uint dwProcessId
 	);
 	
 	[DllImport("kernel32.dll")]
-    public static extern bool DebugActiveProcess(
+	public static extern bool DebugActiveProcess(
 		uint dwProcessId
 	);
 
 	[DllImport("kernel32.dll")]
-    public static extern bool WaitForDebugEvent(
+    	public static extern bool WaitForDebugEvent(
 		ref DEBUG_EVENT lpDebugEvent,
 		uint dwMilliseconds
 	);	
 	
 	[DllImport("kernel32.dll")]
-    public static extern bool ContinueDebugEvent(
+    	public static extern bool ContinueDebugEvent(
 		uint dwProcessId,
 		uint dwThreadId,
 		uint dwContinueStatus
 	);		
 
 	[DllImport("kernel32.dll")]
-    public static extern bool DebugActiveProcessStop(
+    	public static extern bool DebugActiveProcessStop(
 		uint dwProcessId
 	);	
 	
@@ -412,7 +400,7 @@ Function get_thread_context
 	)
 	
 	$context = New-Object CONTEXT
-	$context.ContextFlags = CONTEXT_FLAGS::CONTEXT_ALL
+	$context.ContextFlags = [CONTEXT_FLAGS]::CONTEXT_ALL
 	$h_thread = open_thread -thread_id $thread_id
 	if([Kernel32]::GetThreadContext($h_thread,[ref] $context))
 	{
