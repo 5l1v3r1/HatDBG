@@ -2,8 +2,6 @@ Add-Type -TypeDefinition @"
 using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-
-
 [Flags]
 public enum CONSTANT : uint
 {
@@ -13,7 +11,6 @@ public enum CONSTANT : uint
 	INFINITE              	= 0xFFFFFFFF,
 	DBG_CONTINUE          	= 0x00010002,
 }
-
 [StructLayout(LayoutKind.Sequential)]
 public struct PROCESS_INFORMATION
 {
@@ -22,7 +19,6 @@ public struct PROCESS_INFORMATION
     public uint dwProcessId;
     public uint dwThreadId;
 }
-
 [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
 public struct STARTUPINFO
 {
@@ -45,7 +41,6 @@ public struct STARTUPINFO
     public IntPtr hStdOutput;
     public IntPtr hStdError;
 }
-
 [StructLayout(LayoutKind.Sequential)]
 public struct SECURITY_ATTRIBUTES
 {
@@ -53,7 +48,6 @@ public struct SECURITY_ATTRIBUTES
     public IntPtr lpSecurityDescriptor;
     public bool bInheritHandle;
 }
-
 [Flags]
 public enum CreationFlags : int
 {
@@ -74,7 +68,6 @@ public enum CreationFlags : int
     CREATE_DEFAULT_ERROR_MODE 			= 0x04000000,
     CREATE_NO_WINDOW 				= 0x08000000,
 }
-
 [Flags]
 public enum STARTF : uint
 {
@@ -88,7 +81,6 @@ public enum STARTF : uint
     STARTF_FORCEOFFFEEDBACK 		= 0x00000080,
     STARTF_USESTDHANDLES 		= 0x00000100,
 }
-
 public enum ShowWindow : short
 {
     SW_HIDE 		= 0,
@@ -107,7 +99,6 @@ public enum ShowWindow : short
     SW_FORCEMINIMIZE 	= 11,
     SW_MAX 		= 11
 }
-
 [Flags]
 public enum ProcessAccess : uint
 {
@@ -123,7 +114,6 @@ public enum ProcessAccess : uint
 	Synchronize 		= 0x00100000,
 	All 			= 0x001F0FFF
 }
-
 [Flags]
 public enum ThreadAccess : int
 {
@@ -151,13 +141,19 @@ public enum SnapshotFlags : uint
 	All 		= 0x0000001F,
 	NoHeaps 	= 0x40000000
 }
-
 [Flags]
 public enum CONTEXT_FLAGS : uint
 {
-   CONTEXT_DEBUG_REGISTERS 	= 0x00010010,
-   CONTEXT_FULL 		= 0x00010007,
-   CONTEXT_ALL 			= CONTEXT_FULL | CONTEXT_DEBUG_REGISTERS
+   CONTEXT_i386 = 0x10000,
+   CONTEXT_i486 = 0x10000,   //  same as i386
+   CONTEXT_CONTROL = CONTEXT_i386 | 0x01, // SS:SP, CS:IP, FLAGS, BP
+   CONTEXT_INTEGER = CONTEXT_i386 | 0x02, // AX, BX, CX, DX, SI, DI
+   CONTEXT_SEGMENTS = CONTEXT_i386 | 0x04, // DS, ES, FS, GS
+   CONTEXT_FLOATING_POINT = CONTEXT_i386 | 0x08, // 387 state
+   CONTEXT_DEBUG_REGISTERS = CONTEXT_i386 | 0x10, // DB 0-3,6,7
+   CONTEXT_EXTENDED_REGISTERS = CONTEXT_i386 | 0x20, // cpu specific extensions
+   CONTEXT_FULL = CONTEXT_CONTROL | CONTEXT_INTEGER | CONTEXT_SEGMENTS,
+   CONTEXT_ALL = CONTEXT_CONTROL | CONTEXT_INTEGER | CONTEXT_SEGMENTS |  CONTEXT_FLOATING_POINT | CONTEXT_DEBUG_REGISTERS |  CONTEXT_EXTENDED_REGISTERS
 }
 	
 [StructLayout(LayoutKind.Sequential)]
@@ -168,21 +164,18 @@ public struct DEBUG_EVENT
 	public int dwThreadId;
 	public DEBUG_EVENT_UNION u;
 }
-
 [StructLayout(LayoutKind.Sequential)]
 public struct EXCEPTION_DEBUG_INFO
 {
 	public EXCEPTION_RECORD ExceptionRecord;
 	public uint dwFirstChance;
 }
-
 [StructLayout(LayoutKind.Explicit)]
 public struct DEBUG_EVENT_UNION
 {
 	[FieldOffset(0)]
 	public EXCEPTION_DEBUG_INFO Exception;
 }
-
 [StructLayout(LayoutKind.Sequential)]
 public struct EXCEPTION_RECORD
 {
@@ -194,7 +187,6 @@ public struct EXCEPTION_RECORD
 	[MarshalAs(UnmanagedType.ByValArray, SizeConst = 15, ArraySubType = UnmanagedType.U4)]
 	public uint[] ExceptionInformation;
 }
-
 [StructLayout(LayoutKind.Sequential)]
 public struct THREADENTRY32
 {
@@ -206,7 +198,6 @@ public struct THREADENTRY32
 	public uint tpDeltaPri;
 	public uint dwFlags;
 }
-
 [StructLayout(LayoutKind.Sequential)]
 public struct FLOATING_SAVE_AREA
 {
@@ -221,7 +212,6 @@ public struct FLOATING_SAVE_AREA
      public byte[] RegisterArea;
      public uint Cr0NpxState;
 }
-
 [StructLayout(LayoutKind.Sequential)]
 public struct CONTEXT
 {
@@ -277,7 +267,6 @@ public static class Kernel32
 		
 	[DllImport("kernel32.dll")]
     	public static extern uint GetLastError();
-
 	[DllImport("kernel32.dll")]
     	public static extern IntPtr OpenProcess(
 		ProcessAccess dwDesiredAccess,
@@ -289,7 +278,6 @@ public static class Kernel32
 	public static extern bool DebugActiveProcess(
 		uint dwProcessId
 	);
-
 	[DllImport("kernel32.dll")]
     	public static extern bool WaitForDebugEvent(
 		ref DEBUG_EVENT lpDebugEvent,
@@ -302,7 +290,6 @@ public static class Kernel32
 		uint dwThreadId,
 		uint dwContinueStatus
 	);		
-
 	[DllImport("kernel32.dll")]
     	public static extern bool DebugActiveProcessStop(
 		uint dwProcessId
@@ -343,9 +330,17 @@ public static class Kernel32
 		IntPtr hThread,
 		ref CONTEXT lpContext
 	);
+	
+	[DllImport("kernel32.dll")]
+	public static extern uint SuspendThread(
+		IntPtr hThread
+	);
+ 
+	[DllImport("kernel32.dll")]
+	public static extern int ResumeThread(
+		IntPtr hThread
+	);
 }
-
-
 "@
 $debugger 	= New-Object DEBUGGER
 
@@ -402,11 +397,14 @@ Function get_thread_context
 	$context = New-Object CONTEXT
 	$context.ContextFlags = [CONTEXT_FLAGS]::CONTEXT_ALL
 	$h_thread = open_thread -thread_id $thread_id
+	[Kernel32]::SuspendThread($h_thread)
 	if([Kernel32]::GetThreadContext($h_thread,[ref] $context))
 	{
+		[Kernel32]::ResumeThread($h_thread)
 		[Kernel32]::CloseHandle($h_thread)
 		return $context
 	} else {
+		[Kernel32]::ResumeThread($h_thread)
 		return $false
 	}
 	
