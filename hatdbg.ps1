@@ -2,6 +2,7 @@ Add-Type -TypeDefinition @"
 using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+
 [Flags]
 public enum CONSTANT : uint
 {
@@ -246,8 +247,10 @@ public struct CONTEXT
 public class DEBUGGER
 {
 	public IntPtr h_process;
+	public IntPtr h_thread;
 	public uint dwpid;
 	public bool debugger_active;
+	public CONTEXT context;
 }
 public static class Kernel32
 {
@@ -429,8 +432,11 @@ Function get_debug_event
 	
 	if([Kernel32]::WaitForDebugEvent([ref] $debug_event,[CONSTANT]::INFINITE))
 	{
-		$debugger.debugger_active = $false
-		[Kernel32]::ContinueDebugEvent($debug_event.dwProcessId,$debug_event.dwThreadId,$continue_status)
+		$debugger.h_thread = open_thread -thread_id $debug_event.dwThreadId
+		$context = New-Object CONTEXT
+		$context = get_thread_context -thread_id $debugger.h_thread
+		write-host "[+] Event Code: $($debug_event.dwDebugEventCode) Thread ID: $($debug_event.dwThreadId)"
+		$result = [Kernel32]::ContinueDebugEvent($debug_event.dwProcessId,$debug_event.dwThreadId,$continue_status)
 		
 	}
 }
