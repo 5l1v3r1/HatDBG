@@ -1,7 +1,7 @@
 # HatDBG
 The goal of this project is to make a powershell debugger. This is exclusively for educational purposes.
 
-### Eumerate Threads
+### Enumerate Threads
 ```
 #Use PID for attach debugger
 $result = attach -dwpid 5920
@@ -90,4 +90,35 @@ Output
 [+] EDX: 0x0
 [+] END DUMP
 [*] Finished debugging.
+```
+
+### Get Debug Event Code
+```
+$dwpid = Read-Host "Enter the PID of the Process to attach to"
+attach -dwpid $dwpid
+run
+detach
+```
+
+Output
+```
+Enter the PID of the Process to attach to: : 3168
+[*] Debugger Attached to PID 3168
+[+] Event Code: 3 Thread ID: 5056
+[+] Event Code: 6 Thread ID: 5056
+[+] Event Code: 2 Thread ID: 8340
+[+] Event Code: 2 Thread ID: 10020
+[+] Event Code: 2 Thread ID: 4788
+[+] Event Code: 2 Thread ID: 7572
+[+] Event Code: 2 Thread ID: 128
+[+] Event Code: 2 Thread ID: 7760
+[+] Event Code: 2 Thread ID: 9552
+[+] Event Code: 2 Thread ID: 4676
+[+] Event Code: 2 Thread ID: 4516
+[+] Event Code: 2 Thread ID: 8704
+[+] Event Code: 2 Thread ID: 6016
+[+] Event Code: 2 Thread ID: 8556
+[+] Event Code: 2 Thread ID: 8968
+[+] Event Code: 2 Thread ID: 8204
+[+] Event Code: 2 Thread ID: 5444
 ```
