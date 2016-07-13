@@ -1,5 +1,15 @@
 # HatDBG
-The goal of this project is to make a powershell debugger. This is exclusively for educational purposes.
+The HatDBG is A pure Powershell win32 debugging abstraction class.The goal of this project is to make a powershell debugger. This is exclusively for educational purposes.
+
+## Features
+ + Register manipulation.
+ + Soft (INT 3) breakpoints.
+ + Memory breakpoints (page permissions).
+ + Hardware breakpoints.
+ + Exception / event handling call backs.
+ + Process memory snapshotting and restoring.
+ + Function resolution.
+ + Stack/SEH unwinding.
 
 ### Enumerate Threads
 ```
