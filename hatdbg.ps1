@@ -13,6 +13,30 @@ public enum CONSTANT : uint
 	INFINITE              	= 0xFFFFFFFF,
 	DBG_CONTINUE          	= 0x00010002,
 }
+
+[Flags]
+public enum DEBUG_CONSTANT : uint
+{
+	EXCEPTION_DEBUG_EVENT      =    0x1,
+	CREATE_THREAD_DEBUG_EVENT  =    0x2,
+	CREATE_PROCESS_DEBUG_EVENT =    0x3,
+	EXIT_THREAD_DEBUG_EVENT    =    0x4,
+	EXIT_PROCESS_DEBUG_EVENT   =    0x5,
+	LOAD_DLL_DEBUG_EVENT       =    0x6,
+	UNLOAD_DLL_DEBUG_EVENT     =    0x7,
+	OUTPUT_DEBUG_STRING_EVENT  =    0x8,
+	RIP_EVENT                  =    0x9,
+}
+
+[Flags]
+public enum EXCEPTION_CONSTANT : uint
+{
+	EXCEPTION_ACCESS_VIOLATION     = 0xC0000005,
+	EXCEPTION_BREAKPOINT           = 0x80000003,
+	EXCEPTION_GUARD_PAGE           = 0x80000001,
+	EXCEPTION_SINGLE_STEP          = 0x80000004,
+}
+
 [StructLayout(LayoutKind.Sequential)]
 public struct PROCESS_INFORMATION
 {
@@ -252,7 +276,9 @@ public class DEBUGGER
 	public uint dwpid;
 	public bool debugger_active;
 	public CONTEXT context;
-	public List<IntPtr> breakpoint = new List<IntPtr>();
+	public Dictionary<IntPtr, byte[]> breakpoint = new Dictionary<IntPtr, byte[]>();
+	public uint exception;
+	public IntPtr exception_address;
 }
 public static class Kernel32
 {
@@ -351,15 +377,35 @@ public static class Kernel32
 	public static extern bool ReadProcessMemory(
 		IntPtr hProcess,
 		IntPtr lpBaseAddress,
-		IntPtr lpBuffer,
+		byte[] lpBuffer,
 		int dwSize,
 		out IntPtr lpNumberOfBytesRead
+	);
+	
+	[DllImport("kernel32.dll",SetLastError = true)]
+	public static extern bool WriteProcessMemory(
+		IntPtr hProcess,
+		IntPtr lpBaseAddress,
+		byte[] lpBuffer,
+		int nSize,
+		out IntPtr lpNumberOfBytesWritten
 	);
 	
 	[DllImport("kernel32.dll")]
 	public static extern void RtlZeroMemory(
 		IntPtr dst,
 		int length
+	);
+	
+	[DllImport("kernel32.dll", CharSet=CharSet.Auto)]
+	public static extern IntPtr GetModuleHandle(
+		string lpModuleName
+	);
+	
+	[DllImport("kernel32", CharSet=CharSet.Ansi, ExactSpelling=true, SetLastError=true)]
+	public static extern IntPtr GetProcAddress(
+		IntPtr hModule,
+		string procName
 	);
 }
 "@
@@ -443,18 +489,76 @@ Function read_process_memory
 	)
 	
 	$data 		= New-Object Byte[]($len)
-	$read_buf 	= [Runtime.InteropServices.Marshal]::AllocHGlobal($len)
 	$count 		= New-Object uint32
 
-    [Kernel32]::RtlZeroMemory($read_buf,$len)
-	if([Kernel32]::ReadProcessMemory($debugger.h_process,$address,$read_buf,$len,[ref] $count))
+	if([Kernel32]::ReadProcessMemory($debugger.h_process,$address,$data,$len,[ref] $count))
 	{	
-		[Runtime.InteropServices.Marshal]::Copy([IntPtr] $read_buf, $data, 0, $len)
-		[Runtime.InteropServices.Marshal]::FreeHGlobal($read_buf)
 		return $data
 	} else {
 		return $false
 	}
+}
+
+Function write_process_memory
+{
+	[CmdletBinding()]param (
+	[Parameter(Position = 1, Mandatory=$true)]
+		[Byte[]]
+		$data,
+	[Parameter(Position = 2, Mandatory=$true)]
+		[IntPtr]
+		$address
+	)
+	
+	$len 		= $data.Count
+	$count 		= New-Object uint32
+	if([Kernel32]::WriteProcessMemory($debugger.h_process,$address,$data,$len,[ref] $count))
+	{	
+		return $true
+	} else {
+		return $false
+	}
+}
+
+Function bp_set
+{
+	[CmdletBinding()]param (
+	[Parameter(Position = 1, Mandatory=$true)]
+		[IntPtr]
+		$address
+	)
+	if($debugger.breakpoint.ContainsKey($address) -eq $false)
+	{
+		write-host ("[*] Set Breakpoint at 0x{0,0:x}" -f $address)
+		$original_byte = read_process_memory -len 1 -address $address
+		if($original_byte -ne $false)
+		{
+			if(write_process_memory -data 0xCC -address $address)
+			{
+				$debugger.breakpoint.Add($address,$original_byte)
+				return $true
+			}
+		}
+	}
+	return $false
+}
+
+Function func_resolve
+{
+	[CmdletBinding()]param (
+	[Parameter(Position = 1, Mandatory=$true)]
+		[string]
+		$dll,
+	[Parameter(Position = 2, Mandatory=$true)]
+		[string]
+		$func
+	)
+	
+	$handle 	= [Kernel32]::GetModuleHandle($dll)
+	$address 	= [Kernel32]::GetProcAddress($handle,$func)
+	$result = [Kernel32]::CloseHandle($handle)
+	
+	return [IntPtr] $address
 }
 
 Function detach
@@ -469,6 +573,13 @@ Function detach
 	}
 
 }
+
+Function exception_handler_breakpoint
+{
+	write-host ("[+] Exception address: 0x{0,0:x}" -f $debugger.exception_address)
+	return [CONSTANT]::DBG_CONTINUE
+}
+
 Function get_debug_event
 {
 	$debug_event 		= New-Object DEBUG_EVENT
@@ -480,6 +591,27 @@ Function get_debug_event
 		$context = New-Object CONTEXT
 		$context = get_thread_context -thread_id $debugger.h_thread
 		write-host "[+] Event Code: $($debug_event.dwDebugEventCode) Thread ID: $($debug_event.dwThreadId)"
+		if($debug_event.dwDebugEventCode -eq [DEBUG_CONSTANT]::EXCEPTION_DEBUG_EVENT)
+		{
+			$debugger.exception = $debug_event.u.Exception.ExceptionRecord.ExceptionCode
+			$debugger.exception_address = $debug_event.u.Exception.ExceptionRecord.ExceptionAddress
+			if($debugger.exception -eq [EXCEPTION_CONSTANT]::EXCEPTION_ACCESS_VIOLATION)
+			{
+				write-host "Access Violation Detected."
+			}
+			elseif($debugger.exception -eq [EXCEPTION_CONSTANT]::EXCEPTION_BREAKPOINT)
+			{
+				$continue_status = exception_handler_breakpoint
+			}
+			elseif($debugger.exception -eq [EXCEPTION_CONSTANT]::EXCEPTION_GUARD_PAGE)
+			{
+				write-host "Guard Page Access Detected."
+			}
+			elseif($debugger.exception -eq [EXCEPTION_CONSTANT]::EXCEPTION_SINGLE_STEP)
+			{
+				write-host "Single Stepping."
+			}
+		}
 		$result = [Kernel32]::ContinueDebugEvent($debug_event.dwProcessId,$debug_event.dwThreadId,$continue_status)
 		
 	}
