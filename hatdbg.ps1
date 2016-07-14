@@ -2,6 +2,7 @@ Add-Type -TypeDefinition @"
 using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Collections.Generic;
 
 [Flags]
 public enum CONSTANT : uint
@@ -251,6 +252,7 @@ public class DEBUGGER
 	public uint dwpid;
 	public bool debugger_active;
 	public CONTEXT context;
+	public List<IntPtr> breakpoint = new List<IntPtr>();
 }
 public static class Kernel32
 {
@@ -270,6 +272,7 @@ public static class Kernel32
 		
 	[DllImport("kernel32.dll")]
     	public static extern uint GetLastError();
+		
 	[DllImport("kernel32.dll")]
     	public static extern IntPtr OpenProcess(
 		ProcessAccess dwDesiredAccess,
@@ -343,6 +346,21 @@ public static class Kernel32
 	public static extern int ResumeThread(
 		IntPtr hThread
 	);
+	
+	[DllImport("kernel32.dll", SetLastError = true)]
+	public static extern bool ReadProcessMemory(
+		IntPtr hProcess,
+		IntPtr lpBaseAddress,
+		IntPtr lpBuffer,
+		int dwSize,
+		out IntPtr lpNumberOfBytesRead
+	);
+	
+	[DllImport("kernel32.dll")]
+	public static extern void RtlZeroMemory(
+		IntPtr dst,
+		int length
+	);
 }
 "@
 $debugger 	= New-Object DEBUGGER
@@ -413,6 +431,32 @@ Function get_thread_context
 	
 }
 
+Function read_process_memory
+{
+	[CmdletBinding()]param (
+	[Parameter(Position = 1, Mandatory=$true)]
+		[int]
+		$len,
+	[Parameter(Position = 2, Mandatory=$true)]
+		[IntPtr]
+		$address
+	)
+	
+	$data 		= New-Object Byte[]($len)
+	$read_buf 	= [Runtime.InteropServices.Marshal]::AllocHGlobal($len)
+	$count 		= New-Object uint32
+
+    [Kernel32]::RtlZeroMemory($read_buf,$len)
+	if([Kernel32]::ReadProcessMemory($debugger.h_process,$address,$read_buf,$len,[ref] $count))
+	{	
+		[Runtime.InteropServices.Marshal]::Copy([IntPtr] $read_buf, $data, 0, $len)
+		[Runtime.InteropServices.Marshal]::FreeHGlobal($read_buf)
+		return $data
+	} else {
+		return $false
+	}
+}
+
 Function detach
 {
 	if([Kernel32]::DebugActiveProcessStop($debugger.dwpid))
@@ -473,7 +517,6 @@ Function attach
 		write-host "[*] Debugger Attached to PID" $dwpid
 		$debugger.dwpid 			= $dwpid
 		$debugger.debugger_active 	= $true
-		run
 	} else {
 		write-host "[-] Unable to attach to the Process"
 	}
