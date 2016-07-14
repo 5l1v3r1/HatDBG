@@ -1,16 +1,6 @@
 # HatDBG
 The HatDBG is A pure Powershell win32 debugging abstraction class.The goal of this project is to make a powershell debugger. This is exclusively for educational purposes.
 
-## Features
- + Register manipulation.
- + Soft (INT 3) breakpoints.
- + Memory breakpoints (page permissions).
- + Hardware breakpoints.
- + Exception / event handling call backs.
- + Process memory snapshotting and restoring.
- + Function resolution.
- + Stack/SEH unwinding.
-
 ### Enumerate Threads
 ```
 #Use PID for attach debugger
@@ -131,4 +121,58 @@ Enter the PID of the Process to attach to: : 3168
 [+] Event Code: 2 Thread ID: 8968
 [+] Event Code: 2 Thread ID: 8204
 [+] Event Code: 2 Thread ID: 5444
+```
+
+### Set Breakpoint
+```
+$dwpid = Read-Host "Enter the PID of the Process to attach to"
+attach -dwpid $dwpid
+$address = func_resolve -dll "msvcrt.dll" -func "printf"
+bp_set -address $address
+run
+
+detach
+```
+
+Output
+```
+Enter the PID of the Process to attach to: 4644
+[*] Debugger Attached to PID 4644
+[*] Set Breakpoint at 0x00116046
+[+] Event Code: 3 Thread ID: 7740
+[+] Event Code: 6 Thread ID: 7740
+[+] Event Code: 2 Thread ID: 3268
+[+] Event Code: 2 Thread ID: 9864
+[+] Event Code: 2 Thread ID: 9700
+[+] Event Code: 2 Thread ID: 6600
+[+] Event Code: 6 Thread ID: 7740
+[+] Event Code: 6 Thread ID: 7740
+[+] Event Code: 6 Thread ID: 7740
+[+] Event Code: 6 Thread ID: 7740
+[+] Event Code: 6 Thread ID: 7740
+[+] Event Code: 6 Thread ID: 7740
+[+] Event Code: 6 Thread ID: 7740
+[+] Event Code: 6 Thread ID: 7740
+[+] Event Code: 6 Thread ID: 7740
+[+] Event Code: 6 Thread ID: 7740
+[+] Event Code: 6 Thread ID: 7740
+[+] Event Code: 6 Thread ID: 7740
+[+] Event Code: 6 Thread ID: 7740
+[+] Event Code: 6 Thread ID: 7740
+[+] Event Code: 6 Thread ID: 7740
+[+] Event Code: 6 Thread ID: 7740
+[+] Event Code: 6 Thread ID: 7740
+[+] Event Code: 6 Thread ID: 7740
+[+] Event Code: 6 Thread ID: 7740
+[+] Event Code: 6 Thread ID: 7740
+[+] Event Code: 6 Thread ID: 7740
+[+] Event Code: 6 Thread ID: 7740
+[+] Event Code: 6 Thread ID: 7740
+[+] Event Code: 6 Thread ID: 7740
+[+] Event Code: 6 Thread ID: 7740
+[+] Event Code: 6 Thread ID: 7740
+[+] Event Code: 2 Thread ID: 7288
+[+] Event Code: 1 Thread ID: 7288
+[+] Exception address: 0x00116046
+[+] Event Code: 4 Thread ID: 7288
 ```
