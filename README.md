@@ -1,6 +1,100 @@
 # HatDBG
-The HatDBG is A pure Powershell win32 debugging abstraction class.The goal of this project is to make a powershell debugger. This is exclusively for educational purposes.
+The HatDBG is A pure Powershell win32 debugging abstraction class. The goal of this project is to make a powershell debugger. It is intended to be used during internal penetration tests and red team engagements. This is exclusively for educational purposes.
 
+The debugger objects implementing a number of features such as: 
+ + Soft (INT 3) breakpoints
+ + Exception / event handling call backs
+ + Process memory snapshotting
+ + Function resolution
+ + Memory manipulation
+ + Threads enumerations
+
+## Method Summary
+### open_thread
+```
+open_thread(thread_id)
+Convenience wrapper around OpenThread().
+```
+
+### enumerate_threads
+```
+ enumerate_threads()
+Using the CreateToolhelp32Snapshot() API enumerate all system threads returning a list of thread IDs that belong to the debuggee.
+```
+
+### get_thread_context
+```
+get_thread_context(thread_id)
+Convenience wrapper around GetThreadContext().
+```
+
+### read_process_memory
+```
+read_process_memory(address, len)
+Read from the debuggee process space.
+```
+
+### write_process_memory
+```
+write_process_memory(address, data, len)
+Write to the debuggee process space.
+```
+
+### bp_set
+```
+bp_set(address)
+Sets a breakpoint at the designated address.
+```
+
+### func_resolve
+```
+func_resolve(dll, func)
+Utility function that resolves the address of a given module / function name pair under the context of the debugger. 
+```
+
+### detach
+```
+detach()
+Detach from debuggee.
+```
+
+### attach
+```
+attach(dwpid)
+Attach to the specified process by PID.
+```
+
+### exception_handler_breakpoint
+```
+exception_handler_breakpoint()
+This is the default EXCEPTION_BREAKPOINT handler, responsible for transparently restoring soft breakpoints and passing control to the registered user callback handler. 
+```
+
+### get_debug_event
+```
+get_debug_event()
+Geth debugger event and responsible for callback handler.
+```
+
+### run
+```
+run()
+Enter the infinite debug event handling loop.
+```
+
+### open_process
+```
+open_process(dwpid)
+Convenience wrapper around OpenProcess().
+```
+
+### load
+```
+load(path)
+Load the specified executable and optional command line arguments into the debugger.
+```
+
+## Example
 ### Enumerate Threads
 ```
 #Use PID for attach debugger
