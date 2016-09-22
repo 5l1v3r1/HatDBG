@@ -543,6 +543,30 @@ Function bp_set
 	return $false
 }
 
+Function bp_del
+{
+	[CmdletBinding()]param (
+	[Parameter(Position = 1, Mandatory=$true)]
+		[IntPtr]
+		$address
+	)
+	if($debugger.breakpoint.ContainsKey($address) -eq $true)
+	{
+		write-host ("[*] Remove Breakpoint at 0x{0,0:x}" -f $address)
+		$original_byte = $debugger.breakpoint[$address]
+		if($original_byte -ne $false)
+		{
+			if(write_process_memory -data $original_byte -address $address)
+			{
+				return $true
+			}
+		}
+		
+	}
+	return $false
+	
+}
+
 Function func_resolve
 {
 	[CmdletBinding()]param (
@@ -576,7 +600,7 @@ Function detach
 
 Function exception_handler_breakpoint
 {
-	write-host ("[+] Exception address: 0x{0,0:x}" -f $debugger.exception_address)
+	write-host ("[+] Breakpoint Exception address: 0x{0,0:x}" -f $debugger.exception_address)
 	return [CONSTANT]::DBG_CONTINUE
 }
 
