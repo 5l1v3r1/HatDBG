@@ -46,6 +46,12 @@ bp_set(address)
 Sets a breakpoint at the designated address.
 ```
 
+### bp_del
+```
+bp_del(address)
+Removes the breakpoint from target address.
+```
+
 ### func_resolve
 ```
 func_resolve(dll, func)
